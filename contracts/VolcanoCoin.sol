@@ -15,4 +15,8 @@ contract VolcanoCoin {
   function getOwner() public view  returns (address) {
     return owner;
   }
+
+  function getTotalSupply() public view returns (uint) {
+    return totalSupply;
+  }
 }
