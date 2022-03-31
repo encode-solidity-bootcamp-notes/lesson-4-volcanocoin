@@ -11,4 +11,8 @@ contract VolcanoCoin {
     owner = msg.sender;
     totalSupply = initialSupply;
   }
+
+  function getOwner() public view  returns (address) {
+    return owner;
+  }
 }
