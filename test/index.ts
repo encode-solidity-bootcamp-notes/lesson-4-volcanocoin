@@ -1,11 +1,13 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 
+import { BigNumber } from "ethers";
+
 import type { Signer, Contract, ContractTransaction } from "ethers";
 
 const CONTRACT_CONSTANTS = {
-  initialSupply: 10000,
-  increaseSupplyAmount: 1000,
+  initialSupply: BigNumber.from(10000),
+  increaseSupplyAmount: BigNumber.from(1000),
   events: {
     totalSupplyChange: "TotalSupplyChange",
   },
@@ -13,9 +15,11 @@ const CONTRACT_CONSTANTS = {
 
 const expectTotalSupply = async (
   volcanoCoinContract: Contract,
-  expectedSupply: number
+  expectedSupply: BigNumber
 ) => {
-  const totalSupply = await volcanoCoinContract.getTotalSupply();
+  // https://docs.ethers.io/v5/api/utils/bignumber/
+  const totalSupply: BigNumber = await volcanoCoinContract.getTotalSupply();
+
   expect(totalSupply).to.equal(expectedSupply);
 
   return totalSupply;
@@ -25,7 +29,7 @@ describe("VolcanoCoin", function () {
   let ownerAccount: Signer;
   let nonOwnerAccount: Signer;
 
-  let currentSupply: number;
+  let currentSupply: BigNumber;
   let volcanoCoinContract: Contract;
 
   before("deploy contract and load signer accounts", async () => {
@@ -57,19 +61,17 @@ describe("VolcanoCoin", function () {
     expect(owner).to.equal(ownerAccountAddress);
   });
 
-  it("should have a public function [getTotalSupply] to view the total supply", async (done) => {
+  it("should have a public function [getTotalSupply] to view the total supply", async () => {
     const totalSupply = await expectTotalSupply(
       volcanoCoinContract,
       CONTRACT_CONSTANTS.initialSupply
     );
     // update current supply after assertion for consistency in downstream tests
     // can be done in expectTotalSupply helper but better to be explicit in tests for readability
-    volcanoCoinContract.functions.currentSupply = totalSupply;
-
-    done();
+    currentSupply = totalSupply;
   });
 
-  it("should have a public function [increaseSupply] that increases the total supply by 1000 when called from the owner account", async (done) => {
+  it("should have a public function [increaseSupply] that increases the total supply by 1000 when called from the owner account", async () => {
     // call from owner account (implicit as first account in signers, but done explicitly for testing)
     const increaseSupplyTx: ContractTransaction = await volcanoCoinContract
       .connect(ownerAccount)
@@ -80,12 +82,11 @@ describe("VolcanoCoin", function () {
 
     const totalSupply = await expectTotalSupply(
       volcanoCoinContract,
-      currentSupply + CONTRACT_CONSTANTS.increaseSupplyAmount
+      // https://docs.ethers.io/v5/api/utils/bignumber/#BigNumber--BigNumber--methods--math-operations
+      currentSupply.add(CONTRACT_CONSTANTS.increaseSupplyAmount)
     );
 
     currentSupply = totalSupply;
-
-    done();
   });
 
   it("should revert increasing the total supply by 1000 when [increaseSupply] is called from a non-owner account", async () => {
@@ -97,14 +98,13 @@ describe("VolcanoCoin", function () {
       .to.be.reverted;
   });
 
-  it("should emit an event [TotalSupplyChange] when the total supply changes", async (done) => {
+  it("should emit an event [TotalSupplyChange] when the total supply changes", async () => {
     volcanoCoinContract.once(
       CONTRACT_CONSTANTS.events.totalSupplyChange,
       (totalSupply) => {
         expect(totalSupply).to.equal(
-          currentSupply + CONTRACT_CONSTANTS.increaseSupplyAmount
+          currentSupply.add(CONTRACT_CONSTANTS.increaseSupplyAmount)
         );
-        done();
       }
     );
 
