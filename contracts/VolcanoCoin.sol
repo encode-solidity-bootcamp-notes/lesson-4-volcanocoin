@@ -13,6 +13,13 @@ contract VolcanoCoin {
     totalSupply = initialSupply;
   }
 
+  // -- EVENTS -- //
+
+  event TotalSupplyChange(uint newTotalSupply);
+
+
+  // -- MODIFIERS -- //
+
   modifier requireOwner() {
     require(
         msg.sender == owner,
@@ -21,6 +28,8 @@ contract VolcanoCoin {
     
     _;
   }
+
+  // -- FUNCTIONS -- //
 
   function getOwner() public view  returns (address) {
     return owner;
@@ -32,5 +41,7 @@ contract VolcanoCoin {
 
   function increaseSupply() public requireOwner {
     totalSupply += incrementAmount;
+    
+    emit TotalSupplyChange(totalSupply);
   }
 }
