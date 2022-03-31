@@ -47,14 +47,17 @@ describe("VolcanoCoin", function () {
     await volcanoCoinContract.deployed();
   });
 
+  it("should compile and deploy without error", () =>
+    expect(volcanoCoinContract).to.exist);
+
   it("should set the owner account to the account that created the contract", async () => {
-    const owner = await volcanoCoinContract.owner();
+    const owner = await volcanoCoinContract.getOwner();
     const ownerAccountAddress = await ownerAccount.getAddress();
 
     expect(owner).to.equal(ownerAccountAddress);
   });
 
-  it("should have a public function [getTotalSupply] to view the total supply", async () => {
+  it("should have a public function [getTotalSupply] to view the total supply", async (done) => {
     const totalSupply = await expectTotalSupply(
       volcanoCoinContract,
       CONTRACT_CONSTANTS.initialSupply
@@ -62,9 +65,11 @@ describe("VolcanoCoin", function () {
     // update current supply after assertion for consistency in downstream tests
     // can be done in expectTotalSupply helper but better to be explicit in tests for readability
     volcanoCoinContract.functions.currentSupply = totalSupply;
+
+    done();
   });
 
-  it("should have a public function [increaseSupply] that increases the total supply by 1000 when called from the owner account", async () => {
+  it("should have a public function [increaseSupply] that increases the total supply by 1000 when called from the owner account", async (done) => {
     // call from owner account (implicit as first account in signers, but done explicitly for testing)
     const increaseSupplyTx: ContractTransaction = await volcanoCoinContract
       .connect(ownerAccount)
@@ -79,6 +84,8 @@ describe("VolcanoCoin", function () {
     );
 
     currentSupply = totalSupply;
+
+    done();
   });
 
   it("should revert increasing the total supply by 1000 when [increaseSupply] is called from a non-owner account", async () => {
@@ -86,7 +93,7 @@ describe("VolcanoCoin", function () {
     // https://hardhat.org/tutorial/testing-contracts.html#full-coverage
     // https://github.com/NomicFoundation/hardhat-hackathon-boilerplate/blob/master/test/Token.js#L97
     // https://ethereum-waffle.readthedocs.io/en/latest/matchers.html#revert
-    await expect(volcanoCoinContract.connect(nonOwnerAccount).increaseSupply())
+    return expect(volcanoCoinContract.connect(nonOwnerAccount).increaseSupply())
       .to.be.reverted;
   });
 
