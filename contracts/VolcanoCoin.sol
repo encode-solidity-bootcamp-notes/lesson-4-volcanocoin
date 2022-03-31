@@ -3,4 +3,12 @@ pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
 
-contract VolcanoCoin {}
+contract VolcanoCoin {
+  address private owner;
+  uint private totalSupply;
+
+  constructor(uint initialSupply) {
+    owner = msg.sender;
+    totalSupply = initialSupply;
+  }
+}
