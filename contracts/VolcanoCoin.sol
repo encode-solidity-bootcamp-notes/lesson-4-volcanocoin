@@ -6,10 +6,20 @@ import "hardhat/console.sol";
 contract VolcanoCoin {
   address private owner;
   uint private totalSupply;
+  uint16 private incrementAmount = 1000;
 
   constructor(uint initialSupply) {
     owner = msg.sender;
     totalSupply = initialSupply;
+  }
+
+  modifier requireOwner() {
+    require(
+        msg.sender == owner,
+        "Call must be made from owner account"
+    );
+    
+    _;
   }
 
   function getOwner() public view  returns (address) {
@@ -18,5 +28,9 @@ contract VolcanoCoin {
 
   function getTotalSupply() public view returns (uint) {
     return totalSupply;
+  }
+
+  function increaseSupply() public requireOwner {
+    totalSupply += incrementAmount;
   }
 }
