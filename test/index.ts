@@ -7,9 +7,10 @@ import { ethers } from "hardhat";
 
 import { BigNumber } from "ethers";
 
-import type { Signer, Contract, ContractTransaction } from "ethers";
+import type { Signer, Contract } from "ethers";
 
 const CONTRACT_CONSTANTS = {
+  // NOTE: use BigNumber for compatability with call response values and waffle matchers
   initialSupply: BigNumber.from(10000),
   increaseSupplyAmount: BigNumber.from(1000),
   events: {
@@ -18,25 +19,11 @@ const CONTRACT_CONSTANTS = {
   },
 };
 
-const expectTotalSupply = async (
-  volcanoCoinContract: Contract,
-  expectedSupply: BigNumber
-) => {
-  // https://docs.ethers.io/v5/api/utils/bignumber/
-  const totalSupply: BigNumber = await volcanoCoinContract.getTotalSupply();
-
-  expect(totalSupply).to.equal(expectedSupply);
-
-  return totalSupply;
-};
-
 describe("VolcanoCoin", function () {
   let ownerAccount: Signer;
   let nonOwnerAccount: Signer;
 
   let volcanoCoinContract: Contract;
-  let currentSupply = CONTRACT_CONSTANTS.initialSupply;
-
   before("deploy contract and load signer accounts", async () => {
     // get and assign the two signer accounts
     const [first, second] = await ethers.getSigners();
@@ -67,16 +54,10 @@ describe("VolcanoCoin", function () {
       expect(owner).to.equal(ownerAccountAddress);
     });
 
-    it("should have an initial supply of 10,000 tokens", () => async () => {
-      const totalSupply = await expectTotalSupply(
-        volcanoCoinContract,
+    it("should have an initial supply of 10,000 tokens", () => async () =>
+      expect(await volcanoCoinContract.getTotalSupply()).to.equal(
         CONTRACT_CONSTANTS.initialSupply
-      );
-
-      // update current supply after assertion for consistency in downstream tests
-      // can be done in expectTotalSupply helper but better to be explicit in tests for readability
-      currentSupply = totalSupply;
-    });
+      ));
 
     it("should assign the initial supply to the owner account balance", async () => {
       const ownerAccountAddress = await ownerAccount.getAddress();
@@ -88,15 +69,13 @@ describe("VolcanoCoin", function () {
 
   describe("publicly accessible view functions", () => {
     it("getTotalSupply: returns the current total supply", async () => {
-      await expectTotalSupply(
-        volcanoCoinContract,
+      expect(await volcanoCoinContract.getTotalSupply()).to.equal(
         CONTRACT_CONSTANTS.initialSupply
       );
 
-      await expectTotalSupply(
-        volcanoCoinContract.connect(nonOwnerAccount),
-        CONTRACT_CONSTANTS.initialSupply
-      );
+      expect(
+        await volcanoCoinContract.connect(nonOwnerAccount).getTotalSupply()
+      ).to.equal(CONTRACT_CONSTANTS.initialSupply);
     });
 
     it("balanceOf: returns the current balance of the specified account argument", async () => {
@@ -145,8 +124,7 @@ describe("VolcanoCoin", function () {
         expect(ownerPayment.recipient).to.equal(nonOwnerAccountAddress);
         expect(ownerPayment.amount).to.equal(BigNumber.from(amount));
 
-        // send back to maintain state for downstream tests and confirm same from non owner account
-        // THINK: all this stateful testing is smelly...is there a way to clear the contract and redeploy it for each test suite?
+        // send back to confirm same behavior from non owner account
 
         await volcanoCoinContract
           .connect(nonOwnerAccount)
@@ -167,21 +145,21 @@ describe("VolcanoCoin", function () {
 
   describe("increaseSupply is a publicly accessible function that only the owner account can call", () => {
     it("when called from the owner account it increases the total supply by 1000", async () => {
+      const previousTotalSupply: BigNumber =
+        await volcanoCoinContract.getTotalSupply();
+
       // call from owner account (implicit as first account in signers, but done explicitly for testing)
-      const increaseSupplyTx: ContractTransaction = await volcanoCoinContract
-        .connect(ownerAccount)
-        .increaseSupply();
+      await volcanoCoinContract.connect(ownerAccount).increaseSupply();
 
-      // wait for tx to be mined
-      await increaseSupplyTx.wait();
+      const currentTotalSupply: BigNumber =
+        await volcanoCoinContract.getTotalSupply();
 
-      const totalSupply = await expectTotalSupply(
-        volcanoCoinContract,
-        // https://docs.ethers.io/v5/api/utils/bignumber/#BigNumber--BigNumber--methods--math-operations
-        currentSupply.add(CONTRACT_CONSTANTS.increaseSupplyAmount)
+      // https://docs.ethers.io/v5/api/utils/bignumber/#BigNumber--BigNumber--methods--math-operations
+      const expectedSupply = previousTotalSupply.add(
+        CONTRACT_CONSTANTS.increaseSupplyAmount
       );
 
-      currentSupply = totalSupply;
+      expect(currentTotalSupply).to.equal(expectedSupply);
     });
 
     // expect to be reverted
@@ -229,16 +207,13 @@ describe("VolcanoCoin", function () {
   });
 
   describe("contract events", () => {
-    it("emits a TotalSupplyChange event with the new total supply as output when the total supply changes", async () => {
-      await expect(
+    it("emits a TotalSupplyChange event with the new total supply as output when the total supply changes", () =>
+      expect(
         volcanoCoinContract.connect(ownerAccount).increaseSupply()
       ).to.emit(
         volcanoCoinContract,
         CONTRACT_CONSTANTS.events.totalSupplyChange
-      );
-
-      currentSupply = await volcanoCoinContract.getTotalSupply();
-    });
+      ));
 
     it("emits a Transfer event with (recipient address, amount) as output when a transfer occurs", async () => {
       const amount = 1000;
