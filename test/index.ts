@@ -136,13 +136,6 @@ describe("VolcanoCoin", function () {
       currentSupply = totalSupply;
     });
 
-    // NOTE: not in spec but seems logical to include
-    // remove skip to include test
-    it.skip("[BONUS] when successful it assigns the increased supply to the owner account balance", async () => {
-      const balance = await volcanoCoinContract.balanceOf(ownerAccount);
-      expect(balance).to.equal(currentSupply);
-    });
-
     // expect to be reverted
     // https://docs.soliditylang.org/en/develop/control-structures.html#revert
     // https://hardhat.org/tutorial/testing-contracts.html#full-coverage
@@ -213,6 +206,25 @@ describe("VolcanoCoin", function () {
       )
         .to.emit(volcanoCoinContract, CONTRACT_CONSTANTS.events.transfer)
         .withArgs(recipientAddress, amount);
+    });
+  });
+
+  // remove .skip to run
+  describe.skip("[BONUS] additional requirements to try implementing", () => {
+    it("increaseTotalSupply: assigns the increased supply to the owner account balance when successful", async () => {
+      const balance = await volcanoCoinContract.balanceOf(ownerAccount);
+      expect(balance).to.equal(currentSupply);
+    });
+
+    // THINK: does this actually make balances private? can they be determined by other means?
+    it("balanceOf: reverts if a non-owner caller requests the balance of someone else's account", async () => {
+      const ownerAccountAddress = await ownerAccount.getAddress();
+
+      await expect(
+        volcanoCoinContract
+          .connect(nonOwnerAccount)
+          .balanceOf(ownerAccountAddress)
+      ).to.be.reverted;
     });
   });
 });
