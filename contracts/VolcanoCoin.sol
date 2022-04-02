@@ -19,6 +19,7 @@ contract VolcanoCoin {
 
   event TotalSupplyChange(uint newTotalSupply);
 
+  event Transfer(address recipient, uint amount);
 
   // -- MODIFIERS -- //
 
@@ -55,7 +56,7 @@ contract VolcanoCoin {
     return balances[account];
   }
 
-  function transfer(address toAccount, uint amount) public {
+  function transfer(address recipient, uint amount) public {
     uint currentBalance = balanceOf(msg.sender);
     
     require(
@@ -64,6 +65,9 @@ contract VolcanoCoin {
     );
     
     balances[msg.sender] -= amount;
-    balances[toAccount] += amount;
+    balances[recipient] += amount;
+
+    // only emit after successful transfer
+    emit Transfer(recipient, amount);
   }
 }
