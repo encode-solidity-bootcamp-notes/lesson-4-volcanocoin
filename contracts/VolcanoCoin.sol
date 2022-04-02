@@ -72,6 +72,7 @@ contract VolcanoCoin {
   }
 
   function transfer(address recipient, uint amount) public {
+    address sender = msg.sender;
     uint currentBalance = balanceOf(msg.sender);
     
     require(
@@ -79,10 +80,20 @@ contract VolcanoCoin {
       "Transfer amount must be less than or equal to current balance of account"
     );
     
-    balances[msg.sender] -= amount;
+    balances[sender] -= amount;
     balances[recipient] += amount;
 
-    // only emit after successful transfer
+    // only emit and record Payment after successful transfer
     emit Transfer(recipient, amount);
+
+    // working with arrays: https://docs.soliditylang.org/en/develop/types.html#arrays
+    // NOTE: the entry and the array value are pre-allocated? do not need to define as empty before being able to push
+    
+    // NOTE: NOT like js shorthand for object properties, payments[sender] = Payment({ recipient, amount });
+    payments[sender].push(Payment({ recipient: recipient, amount: amount }));
+
+    // NOTE: can also give struct fields in DEFINED order Payment { uint amount; address recipient; }
+    // treats the struct name like a constructor function with ordered params
+    // payments[sender].push(Payment(amount, recipient));
   }
 }
