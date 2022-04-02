@@ -86,15 +86,35 @@ describe("VolcanoCoin", function () {
     });
   });
 
-  describe("getTotalSupply should be a publicly accessible function", () => {
-    it("when called from the owner account it returns the total supply", () =>
-      expectTotalSupply(volcanoCoinContract, CONTRACT_CONSTANTS.initialSupply));
+  describe("publicly accessible view functions", () => {
+    it("getTotalSupply: returns the current total supply", async () => {
+      await expectTotalSupply(
+        volcanoCoinContract,
+        CONTRACT_CONSTANTS.initialSupply
+      );
 
-    it("when called from a non-owner account it returns the total supply", () =>
-      expectTotalSupply(
+      await expectTotalSupply(
         volcanoCoinContract.connect(nonOwnerAccount),
         CONTRACT_CONSTANTS.initialSupply
-      ));
+      );
+    });
+
+    it("balanceOf: returns the current balance of the specified account argument", async () => {
+      const ownerAccountAddress = await ownerAccount.getAddress();
+      const nonOwnerAccountAddress = await nonOwnerAccount.getAddress();
+
+      const ownerBalance = await volcanoCoinContract
+        .connect(ownerAccount)
+        .balanceOf(ownerAccountAddress);
+
+      expect(ownerBalance).to.equal(CONTRACT_CONSTANTS.initialSupply);
+
+      const nonOwnerBalance = await volcanoCoinContract
+        .connect(nonOwnerAccount)
+        .balanceOf(nonOwnerAccountAddress);
+
+      expect(nonOwnerBalance).to.equal(BigNumber.from(0));
+    });
   });
 
   describe("increaseSupply is a publicly accessible function that only the owner account can call", () => {
