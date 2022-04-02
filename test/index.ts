@@ -260,8 +260,21 @@ describe("VolcanoCoin", function () {
   // remove .skip to run
   describe.skip("[BONUS] additional requirements to try implementing", () => {
     it("increaseTotalSupply: assigns the increased supply to the owner account balance when successful", async () => {
-      const balance = await volcanoCoinContract.balanceOf(ownerAccount);
-      expect(balance).to.equal(currentSupply);
+      const ownerAccountAddress = await ownerAccount.getAddress();
+      const initialBalance: BigNumber = await volcanoCoinContract.balanceOf(
+        ownerAccountAddress
+      );
+
+      await volcanoCoinContract.connect(ownerAccount).increaseSupply();
+      const balanceAfterIncrease = await volcanoCoinContract.balanceOf(
+        ownerAccountAddress
+      );
+
+      const expectedBalance = initialBalance.add(
+        CONTRACT_CONSTANTS.increaseSupplyAmount
+      );
+
+      expect(balanceAfterIncrease).to.equal(expectedBalance);
     });
 
     // THINK: does this actually make balances private? can they be determined by other means?
