@@ -7,10 +7,12 @@ contract VolcanoCoin {
   address private owner;
   uint private totalSupply;
   uint16 private incrementAmount = 1000;
+  mapping (address => uint) private balances;
 
   constructor(uint initialSupply) {
     owner = msg.sender;
     totalSupply = initialSupply;
+    balances[owner] = totalSupply;
   }
 
   // -- EVENTS -- //
@@ -43,5 +45,13 @@ contract VolcanoCoin {
     totalSupply += incrementAmount;
     
     emit TotalSupplyChange(totalSupply);
+  }
+
+  // TypeError: Data location must be "memory" or "calldata" for return parameter in function, but none was given.
+  // function getBalances() public returns (mapping (address => uint)) {
+  // balanceOf looks to be a standard name for this type of behavior
+  // https://ethereum.org/en/developers/docs/standards/tokens/erc-20/#methods
+  function balanceOf(address account) public view returns (uint) {
+    return balances[account];
   }
 }
