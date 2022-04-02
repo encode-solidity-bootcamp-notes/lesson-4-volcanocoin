@@ -54,6 +54,13 @@ contract VolcanoCoin {
   // balanceOf looks to be a standard name for this type of behavior
   // https://ethereum.org/en/developers/docs/standards/tokens/erc-20/#methods
   function balanceOf(address account) public view returns (uint) {
+    address caller = msg.sender;
+
+    require(
+      caller == owner || caller == account,
+      "Only the contract owner can request the balance of another acount"
+    );
+
     return balances[account];
   }
 
