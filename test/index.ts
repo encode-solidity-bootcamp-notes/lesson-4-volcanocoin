@@ -168,7 +168,7 @@ describe("VolcanoCoin", function () {
   });
 
   describe("contract events", () => {
-    it("emits a TotalSupplyChange event with the new total supply when the total supply changes", async () => {
+    it("emits a TotalSupplyChange event with the new total supply as output when the total supply changes", async () => {
       await expect(
         volcanoCoinContract.connect(ownerAccount).increaseSupply()
       ).to.emit(
@@ -179,11 +179,14 @@ describe("VolcanoCoin", function () {
       currentSupply = await volcanoCoinContract.getTotalSupply();
     });
 
-    it("emits a Transfer event with (recipient address, amount) when a transfer occurs", async () => {
+    it("emits a Transfer event with (recipient address, amount) as output when a transfer occurs", async () => {
       const amount = 1000;
       const recipientAddress = await nonOwnerAccount.getAddress();
 
-      expect(
+      // NOTE: you MUST await the expect
+      // without await this will always pass! unintuitive..
+      // https://github.com/TrueFiEng/Waffle/pull/684
+      await expect(
         volcanoCoinContract
           .connect(ownerAccount)
           .transfer(recipientAddress, amount)
