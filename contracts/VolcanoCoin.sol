@@ -3,11 +3,18 @@ pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
 
+struct Payment {
+  uint amount;
+  address recipient;
+}
+
 contract VolcanoCoin {
   address private owner;
   uint private totalSupply;
   uint16 private incrementAmount = 1000;
+
   mapping (address => uint) private balances;
+  mapping (address => Payment[]) private payments;
 
   constructor(uint initialSupply) {
     owner = msg.sender;
@@ -15,13 +22,13 @@ contract VolcanoCoin {
     balances[owner] = totalSupply;
   }
 
-  // -- EVENTS -- //
+// -- EVENTS -- //
 
   event TotalSupplyChange(uint newTotalSupply);
 
   event Transfer(address recipient, uint amount);
 
-  // -- MODIFIERS -- //
+// -- MODIFIERS -- //
 
   modifier requireOwner() {
     require(
@@ -32,7 +39,7 @@ contract VolcanoCoin {
     _;
   }
 
-  // -- FUNCTIONS -- //
+// -- VIEW FUNCTIONS -- //
 
   function getOwner() public view  returns (address) {
     return owner;
@@ -42,18 +49,26 @@ contract VolcanoCoin {
     return totalSupply;
   }
 
-  function increaseSupply() public requireOwner {
-    totalSupply += incrementAmount;
-    
-    emit TotalSupplyChange(totalSupply);
-  }
-
   // TypeError: Data location must be "memory" or "calldata" for return parameter in function, but none was given.
   // function getBalances() public returns (mapping (address => uint)) {
   // balanceOf looks to be a standard name for this type of behavior
   // https://ethereum.org/en/developers/docs/standards/tokens/erc-20/#methods
   function balanceOf(address account) public view returns (uint) {
     return balances[account];
+  }
+
+  // must return from memory: WHY?
+  // otherwise: TypeError: Data location must be "memory" or "calldata" for return parameter in function, but none was given.
+  function paymentsFrom(address account) public view returns (Payment[] memory) {
+    return payments[account];
+  }
+
+// -- MUTATING FUNCTIONS -- //
+
+  function increaseSupply() public requireOwner {
+    totalSupply += incrementAmount;
+    
+    emit TotalSupplyChange(totalSupply);
   }
 
   function transfer(address recipient, uint amount) public {
