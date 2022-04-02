@@ -1,46 +1,64 @@
-# Advanced Sample Hardhat Project
+> **all credit and rights to the homework questions belong to Laurence Kirk and his team from Extropy**
 
-This project demonstrates an advanced Hardhat use case, integrating other tools commonly used alongside Hardhat in the ecosystem.
+# homework 4 - VolcanoCoin
 
-The project comes with a sample contract, a test for that contract, a sample script that deploys that contract, and an example of a task implementation, which simply lists the available accounts. It also comes with a variety of other tools, preconfigured to work with the project code.
+you can use this repo to get instant feedback as you implement the requirements from the homework.
 
-Try running some of the following tasks:
+> **NOTE**: the test and contract implementations **should not be used as a reference**
 
-```shell
-npx hardhat accounts
-npx hardhat compile
-npx hardhat clean
-npx hardhat test
-npx hardhat node
-npx hardhat help
-REPORT_GAS=true npx hardhat test
-npx hardhat coverage
-npx hardhat run scripts/deploy.ts
-TS_NODE_FILES=true npx ts-node scripts/deploy.ts
-npx eslint '**/*.{js,ts}'
-npx eslint '**/*.{js,ts}' --fix
-npx prettier '**/*.{json,sol,md}' --check
-npx prettier '**/*.{json,sol,md}' --write
-npx solhint 'contracts/**/*.sol'
-npx solhint 'contracts/**/*.sol' --fix
+this was just an attempt to follow TDD by turning the homework specs into tests and then implementing the contract. when we get to the hardhat and testing lessons we will learn the correct way to use these tools.
+
+if you see a better way to do something just open a PR with changes and an explanation so we can all learn from it. see the contributing section at the end
+
+## usage
+
+> setup
+
+1. clone the repo
+```sh
+# http
+git clone https://github.com/encode-solidity-bootcamp-notes/lesson-4-volcanocoin.git
+# ssh
+git@github.com:encode-solidity-bootcamp-notes/lesson-4-volcanocoin.git
+```
+2. install dependencies
+```sh
+npm install
 ```
 
-# Etherscan verification
+> TDD: follow the red > green > refactor workflow to implement the contract
 
-To try out Etherscan verification, you first need to deploy a contract to an Ethereum network that's supported by Etherscan, such as Ropsten.
-
-In this project, copy the .env.example file to a file named .env, and then edit it to fill in the details. Enter your Etherscan API key, your Ropsten node URL (eg from Alchemy), and the private key of the account which will send the deployment transaction. With a valid .env file in place, first deploy your contract:
-
-```shell
-hardhat run --network ropsten scripts/deploy.ts
+3. run the tests to see the requirements
+```sh
+npm test
 ```
 
-Then, copy the deployment address and paste it in to replace `DEPLOYED_CONTRACT_ADDRESS` in this command:
+4. implement contract requirements in `contracts/VolcanoCoin.sol` then run tests to make sure you are making forward progress
 
-```shell
-npx hardhat verify --network ropsten DEPLOYED_CONTRACT_ADDRESS "Hello, Hardhat!"
-```
+5. repeat 3. and 4. until all tests pass!
 
-# Performance optimizations
+> bonus
 
-For faster runs of your tests and scripts, consider skipping ts-node's type checking by setting the environment variable `TS_NODE_TRANSPILE_ONLY` to `1` in hardhat's environment. For more details see [the documentation](https://hardhat.org/guides/typescript.html#performance-optimizations).
+there are 2 extra tests at the end of extra things to try out
+
+## branches
+
+> `master`
+
+- contains only the tests (`tests/index.ts`) and the stub for VolcanoCoin (`contracts/VolcanoCoin.sol`)
+- the bonus tests are `skip`ped so they dont interfere with progress
+
+> `implementation`
+
+- contains my contract solution (**see note above**)
+
+> `bonus`
+
+- removes the `skip` on bonus tests
+- adds implementation of the bonus test requirements  
+
+## contributing
+
+- **test changes**: commit on `master` and rebase the other branches onto it
+- **implementation changes**: commit on `implementation` and rebase `bonus` onto it
+- **bonus features**: commit on `bonus` 
