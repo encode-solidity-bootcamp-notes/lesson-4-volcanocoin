@@ -15,6 +15,7 @@ if you see a better way to do something just open a PR with changes and an expla
 ```sh
   VolcanoCoin
     contract creation
+      ✔ should compile and deploy without error
       ✔ should assign the owner to the account that created the contract
       ✔ should have an initial supply of 10,000 tokens
       ✔ should assign the initial supply to the owner account balance
@@ -49,6 +50,13 @@ git clone https://github.com/encode-solidity-bootcamp-notes/lesson-4-volcanocoin
 # ssh
 git@github.com:encode-solidity-bootcamp-notes/lesson-4-volcanocoin.git
 ```
+
+> [OPTIONAL] if you have vscode and docker installed you can use the remote-containers extension to set up the env automatically:
+
+    1. go to extensions and search for `@recommended` to install the extensions
+    2. open the command pallet (`CMD/ctrl` + `SHIFT` + `P`) and select `rebuild and reopen in container`
+    3. use the integrated terminal to run steps 2-5.
+
 2. install dependencies
 ```sh
 npm install
