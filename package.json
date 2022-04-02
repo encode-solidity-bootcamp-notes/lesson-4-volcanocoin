@@ -1,7 +1,7 @@
 {
-  "name": "homework-4-volcanocoin",
+  "name": "lesson-4-volcanocoin",
   "version": "1.0.0",
-  "description": "Homework 4 of the Encode Solidity bootcamp",
+  "description": "Homework from lesson 4 of the Encode Solidity bootcamp",
   "main": "index.js",
   "scripts": {
     "test": "hardhat test"
