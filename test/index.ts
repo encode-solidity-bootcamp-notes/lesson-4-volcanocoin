@@ -115,6 +115,54 @@ describe("VolcanoCoin", function () {
 
       expect(nonOwnerBalance).to.equal(BigNumber.from(0));
     });
+
+    describe("paymentsFrom: returns the payments sent from the specified account argument", () => {
+      it("returns an empty array if no payments have been made from the account", async () => {
+        const ownerAccountAddress = await ownerAccount.getAddress();
+        const payments = await volcanoCoinContract.paymentsFrom(
+          ownerAccountAddress
+        );
+
+        expect(payments).to.have.lengthOf(0);
+      });
+
+      it("returns an array of Payment ({ recipient, amount }) when payments have been made from the account", async () => {
+        const amount = 1000;
+        const ownerAccountAddress = await ownerAccount.getAddress();
+        const nonOwnerAccountAddress = await nonOwnerAccount.getAddress();
+
+        await volcanoCoinContract
+          .connect(ownerAccount)
+          .transfer(nonOwnerAccountAddress, amount);
+
+        const ownerPayments = await volcanoCoinContract.paymentsFrom(
+          ownerAccountAddress
+        );
+
+        expect(ownerPayments).to.have.lengthOf(1);
+
+        const [ownerPayment] = ownerPayments;
+        expect(ownerPayment.recipient).to.equal(nonOwnerAccountAddress);
+        expect(ownerPayment.amount).to.equal(BigNumber.from(amount));
+
+        // send back to maintain state for downstream tests and confirm same from non owner account
+        // THINK: all this stateful testing is smelly...is there a way to clear the contract and redeploy it for each test suite?
+
+        await volcanoCoinContract
+          .connect(nonOwnerAccount)
+          .transfer(ownerAccountAddress, amount);
+
+        const nonOwnerPayments = await volcanoCoinContract.paymentsFrom(
+          nonOwnerAccountAddress
+        );
+
+        expect(nonOwnerPayments).to.have.lengthOf(1);
+
+        const [nonOwnerPayment] = nonOwnerPayments;
+        expect(nonOwnerPayment.recipient).to.equal(ownerAccountAddress);
+        expect(nonOwnerPayment.amount).to.equal(BigNumber.from(amount));
+      });
+    });
   });
 
   describe("increaseSupply is a publicly accessible function that only the owner account can call", () => {
