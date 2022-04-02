@@ -233,7 +233,7 @@ describe("VolcanoCoin", function () {
   });
 
   // remove .skip to run
-  describe.skip("[BONUS] additional requirements to try implementing", () => {
+  describe("[BONUS] additional requirements to try implementing", () => {
     it("increaseTotalSupply: assigns the increased supply to the owner account balance when successful", async () => {
       const ownerAccountAddress = await ownerAccount.getAddress();
       const initialBalance: BigNumber = await volcanoCoinContract.balanceOf(

@@ -67,6 +67,8 @@ contract VolcanoCoin {
 
   function increaseSupply() public requireOwner {
     totalSupply += incrementAmount;
+    // BONUS: assign the increased supply to the owner
+    balances[msg.sender] += incrementAmount;
     
     emit TotalSupplyChange(totalSupply);
   }
