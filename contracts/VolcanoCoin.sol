@@ -54,4 +54,16 @@ contract VolcanoCoin {
   function balanceOf(address account) public view returns (uint) {
     return balances[account];
   }
+
+  function transfer(address toAccount, uint amount) public {
+    uint currentBalance = balanceOf(msg.sender);
+    
+    require(
+      currentBalance >= amount,
+      "Transfer amount must be less than or equal to current balance of account"
+    );
+    
+    balances[msg.sender] -= amount;
+    balances[toAccount] += amount;
+  }
 }
