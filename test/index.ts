@@ -24,7 +24,7 @@ describe("VolcanoCoin", function () {
   let nonOwnerAccount: Signer;
 
   let volcanoCoinContract: Contract;
-  before("deploy contract and load signer accounts", async () => {
+  before("compile and deploy the contract", async () => {
     // get and assign the two signer accounts
     const [first, second] = await ethers.getSigners();
     ownerAccount = first;
