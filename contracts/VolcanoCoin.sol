@@ -1,37 +1,48 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import "hardhat/console.sol";
+// use OZ interface to ensure conforming of public interface
+// https://docs.openzeppelin.com/contracts/4.x/api/token/erc20#IERC20
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+// follow ERC-20 spec for implementation: https://eips.ethereum.org/EIPS/eip-20
 
 struct Payment {
-    uint256 amount;
-    address recipient;
+    address to;
+    uint256 value;
 }
 
-contract VolcanoCoin {
-    address private owner;
-    uint256 private totalSupply;
-    uint16 private incrementAmount = 1000;
+contract VolcanoCoin is IERC20 {
+    // -- PUBLIC (GETTERS) -- //
+    uint256 public override totalSupply = 10000;
 
-    mapping(address => uint256) private balances;
-    mapping(address => Payment[]) private payments;
+    // -- PRIVATE -- //
+    address private _contractOwner;
+    uint16 private _incrementAmount = 1000;
 
-    constructor(uint256 initialSupply) {
-        owner = msg.sender;
-        totalSupply = initialSupply;
-        balances[owner] = totalSupply;
+    mapping(address => uint256) private _balances;
+    mapping(address => Payment[]) private _payments;
+
+    // mapping(owner => mapping(spender => allowance))
+    // allows owner to have any number of spenders with independent spending allowances
+    mapping(address => mapping(address => uint256)) private _allowances;
+
+    constructor() {
+        _contractOwner = msg.sender;
+        _balances[_contractOwner] = totalSupply;
     }
 
     // -- EVENTS -- //
 
     event TotalSupplyChange(uint256 newTotalSupply);
 
-    event Transfer(address recipient, uint256 amount);
-
     // -- MODIFIERS -- //
 
     modifier requireOwner() {
-        require(msg.sender == owner, "Call must be made from owner account");
+        require(
+            msg.sender == _contractOwner,
+            "Call must be made from contract owner account"
+        );
 
         _;
     }
@@ -39,62 +50,74 @@ contract VolcanoCoin {
     // -- VIEW FUNCTIONS -- //
 
     function getOwner() public view returns (address) {
-        return owner;
+        return _contractOwner;
     }
 
-    function getTotalSupply() public view returns (uint256) {
-        return totalSupply;
+    function balanceOf(address _owner)
+        public
+        view
+        override
+        returns (uint256 balance)
+    {
+        return _balances[_owner];
     }
 
-    // TypeError: Data location must be "memory" or "calldata" for return parameter in function, but none was given.
-    // function getBalances() public returns (mapping (address => uint)) {
-    // balanceOf looks to be a standard name for this type of behavior
-    // https://ethereum.org/en/developers/docs/standards/tokens/erc-20/#methods
-    function balanceOf(address account) public view returns (uint256) {
-        return balances[account];
-    }
-
-    // must return from memory: WHY?
-    // otherwise: TypeError: Data location must be "memory" or "calldata" for return parameter in function, but none was given.
-    function paymentsFrom(address account)
+    function paymentsFrom(address _account)
         public
         view
         returns (Payment[] memory)
     {
-        return payments[account];
+        return _payments[_account];
     }
+
+    function allowance(address _owner, address _spender)
+        public
+        view
+        override
+        returns (uint256 remaining)
+    {}
 
     // -- MUTATING FUNCTIONS -- //
 
     function increaseSupply() public requireOwner {
-        totalSupply += incrementAmount;
+        totalSupply += _incrementAmount;
 
         emit TotalSupplyChange(totalSupply);
     }
 
-    function transfer(address recipient, uint256 amount) public {
-        address sender = msg.sender;
-        uint256 currentBalance = balanceOf(msg.sender);
+    function approve(address _spender, uint256 _value)
+        public
+        override
+        returns (bool success)
+    {}
+
+    function transfer(address _to, uint256 _value)
+        public
+        override
+        returns (bool success)
+    {
+        address from = msg.sender;
+        uint256 currentBalance = balanceOf(from);
 
         require(
-            currentBalance >= amount,
+            _value <= currentBalance,
             "Transfer amount must be less than or equal to current balance of account"
         );
 
-        balances[sender] -= amount;
-        balances[recipient] += amount;
+        _balances[from] -= _value;
+        _balances[_to] += _value;
 
         // only emit and record Payment after successful transfer
-        emit Transfer(recipient, amount);
+        emit Transfer(from, _to, _value);
 
-        // working with arrays: https://docs.soliditylang.org/en/develop/types.html#arrays
-        // NOTE: the entry and the array value are pre-allocated? do not need to define as empty before being able to push
+        _payments[from].push(Payment({to: _to, value: _value}));
 
-        // NOTE: NOT like js shorthand for object properties, payments[sender] = Payment({ recipient, amount });
-        payments[sender].push(Payment({recipient: recipient, amount: amount}));
-
-        // NOTE: can also give struct fields in DEFINED order Payment { uint amount; address recipient; }
-        // treats the struct name like a constructor function with ordered params
-        // payments[sender].push(Payment(amount, recipient));
+        return true;
     }
+
+    function transferFrom(
+        address _from,
+        address _to,
+        uint256 _value
+    ) public override returns (bool success) {}
 }
