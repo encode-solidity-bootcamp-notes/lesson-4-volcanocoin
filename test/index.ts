@@ -7,23 +7,18 @@ import { ethers } from "hardhat";
 
 import { BigNumber } from "ethers";
 
-import type { Signer, Contract } from "ethers";
+import type { Signer } from "ethers";
+import { CONTRACT_CONSTANTS } from "./constants";
 
-const CONTRACT_CONSTANTS = {
-  // NOTE: use BigNumber for compatability with call response values and waffle matchers
-  initialSupply: BigNumber.from(10000),
-  increaseSupplyAmount: BigNumber.from(1000),
-  events: {
-    transfer: "Transfer",
-    totalSupplyChange: "TotalSupplyChange",
-  },
-};
+// NOTE: this will recognize all the typings of the contract
+// if you just use Contract type it is generic
+import { VolcanoCoin } from "../typechain";
 
 describe("VolcanoCoin", function () {
   let ownerAccount: Signer;
   let nonOwnerAccount: Signer;
 
-  let volcanoCoinContract: Contract;
+  let volcanoCoinContract: VolcanoCoin;
   before("compile and deploy the contract", async () => {
     // get and assign the two signer accounts
     const [first, second] = await ethers.getSigners();
@@ -35,9 +30,7 @@ describe("VolcanoCoin", function () {
     // deploy the contract with the owner account as the signer
     // https://hardhat.org/guides/waffle-testing.html#testing-from-a-different-account
     // https://docs.ethers.io/v5/single-page/#/v5/api/contract/contract-factory/-%23-ContractFactory-connect
-    volcanoCoinContract = await VolcanoCoin.connect(ownerAccount).deploy(
-      CONTRACT_CONSTANTS.initialSupply
-    );
+    volcanoCoinContract = await VolcanoCoin.connect(ownerAccount).deploy();
 
     // https://docs.ethers.io/v5/single-page/#/v5/api/contract/contract/-%23-Contract-deployed
     await volcanoCoinContract.deployed();
@@ -55,7 +48,7 @@ describe("VolcanoCoin", function () {
     });
 
     it("should have an initial supply of 10,000 tokens", () => async () =>
-      expect(await volcanoCoinContract.getTotalSupply()).to.equal(
+      expect(await volcanoCoinContract.totalSupply()).to.equal(
         CONTRACT_CONSTANTS.initialSupply
       ));
 
@@ -68,13 +61,13 @@ describe("VolcanoCoin", function () {
   });
 
   describe("publicly accessible view functions", () => {
-    it("getTotalSupply: returns the current total supply", async () => {
-      expect(await volcanoCoinContract.getTotalSupply()).to.equal(
+    it("totalSupply: returns the current total supply", async () => {
+      expect(await volcanoCoinContract.totalSupply()).to.equal(
         CONTRACT_CONSTANTS.initialSupply
       );
 
       expect(
-        await volcanoCoinContract.connect(nonOwnerAccount).getTotalSupply()
+        await volcanoCoinContract.connect(nonOwnerAccount).totalSupply()
       ).to.equal(CONTRACT_CONSTANTS.initialSupply);
     });
 
@@ -121,8 +114,8 @@ describe("VolcanoCoin", function () {
         expect(ownerPayments).to.have.lengthOf(1);
 
         const [ownerPayment] = ownerPayments;
-        expect(ownerPayment.recipient).to.equal(nonOwnerAccountAddress);
-        expect(ownerPayment.amount).to.equal(BigNumber.from(amount));
+        expect(ownerPayment.to).to.equal(nonOwnerAccountAddress);
+        expect(ownerPayment.value).to.equal(BigNumber.from(amount));
 
         // send back to confirm same behavior from non owner account
 
@@ -137,8 +130,8 @@ describe("VolcanoCoin", function () {
         expect(nonOwnerPayments).to.have.lengthOf(1);
 
         const [nonOwnerPayment] = nonOwnerPayments;
-        expect(nonOwnerPayment.recipient).to.equal(ownerAccountAddress);
-        expect(nonOwnerPayment.amount).to.equal(BigNumber.from(amount));
+        expect(nonOwnerPayment.to).to.equal(ownerAccountAddress);
+        expect(nonOwnerPayment.value).to.equal(BigNumber.from(amount));
       });
     });
   });
@@ -146,13 +139,13 @@ describe("VolcanoCoin", function () {
   describe("increaseSupply is a publicly accessible function that only the owner account can call", () => {
     it("when called from the owner account it increases the total supply by 1000", async () => {
       const previousTotalSupply: BigNumber =
-        await volcanoCoinContract.getTotalSupply();
+        await volcanoCoinContract.totalSupply();
 
       // call from owner account (implicit as first account in signers, but done explicitly for testing)
       await volcanoCoinContract.connect(ownerAccount).increaseSupply();
 
       const currentTotalSupply: BigNumber =
-        await volcanoCoinContract.getTotalSupply();
+        await volcanoCoinContract.totalSupply();
 
       // https://docs.ethers.io/v5/api/utils/bignumber/#BigNumber--BigNumber--methods--math-operations
       const expectedSupply = previousTotalSupply.add(
@@ -217,18 +210,17 @@ describe("VolcanoCoin", function () {
 
     it("emits a Transfer event with (recipient address, amount) as output when a transfer occurs", async () => {
       const amount = 1000;
-      const recipientAddress = await nonOwnerAccount.getAddress();
+      const fromAddress = await ownerAccount.getAddress();
+      const toAddress = await nonOwnerAccount.getAddress();
 
       // NOTE: you MUST await the expect
       // without await this will always pass! unintuitive..
       // https://github.com/TrueFiEng/Waffle/pull/684
       await expect(
-        volcanoCoinContract
-          .connect(ownerAccount)
-          .transfer(recipientAddress, amount)
+        volcanoCoinContract.connect(ownerAccount).transfer(toAddress, amount)
       )
         .to.emit(volcanoCoinContract, CONTRACT_CONSTANTS.events.transfer)
-        .withArgs(recipientAddress, amount);
+        .withArgs(fromAddress, toAddress, amount);
     });
   });
 
