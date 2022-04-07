@@ -16,6 +16,11 @@
   },
   // Set *default* container specific settings.json values on container create.
   "settings": {
+    "hardhat.telemetry": false,
+    "[solidity]": {
+      "editor.defaultFormatter": "NomicFoundation.hardhat-solidity"
+    },
+    "hardhat-language-server.trace.server.verbosity": "verbose",
     "todo-tree.regex.regex": "(//|#|<!--|;|/\\*|^|^\\s*(-|\\d+.))\\s*($TAGS)",
     "todo-tree.general.debug": true,
     "todo-tree.general.tags": [
