@@ -1,5 +1,4 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
 import { BigNumber } from "ethers";
 
 import { deployTestContract, getTestSigningAccounts } from "./utils";

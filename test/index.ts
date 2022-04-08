@@ -3,7 +3,6 @@
 // https://github.com/standard/standard/issues/690#issuecomment-278533482
 
 import { expect } from "chai";
-import { ethers } from "hardhat";
 
 import { BigNumber } from "ethers";
 
