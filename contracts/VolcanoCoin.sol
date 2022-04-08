@@ -5,6 +5,7 @@ import "hardhat/console.sol";
 // use OZ interface to ensure conforming of public interface
 // https://docs.openzeppelin.com/contracts/4.x/api/token/erc20#IERC20
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 // follow ERC-20 spec for implementation: https://eips.ethereum.org/EIPS/eip-20
 
@@ -13,9 +14,13 @@ struct Payment {
     uint256 amount;
 }
 
-contract VolcanoCoin is IERC20 {
+contract VolcanoCoin is IERC20, IERC20Metadata {
     // -- PUBLIC (GETTERS) -- //
+    string public override symbol = "VLCN";
+    string public override name = "Volcano Coin";
     uint256 public override totalSupply = 10000;
+    // 18 for matching wei: https://docs.openzeppelin.com/contracts/3.x/api/token/erc20#ERC20-decimals--
+    uint8 public override decimals = 18;
 
     // -- PRIVATE -- //
     address private _contractOwner;
