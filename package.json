@@ -4,7 +4,12 @@
   "description": "Homework from lesson 4 of the Encode Solidity bootcamp",
   "main": "index.js",
   "scripts": {
-    "test": "hardhat test"
+    "clean": "hardhat clean",
+    "prebuild": "npm run clean",
+    "build": "hardhat compile",
+    "pretest": "npm run build",
+    "test": "hardhat test",
+    "test:coverage": "hardhat coverage"
   },
   "author": "the-vampiire",
   "license": "MIT",
