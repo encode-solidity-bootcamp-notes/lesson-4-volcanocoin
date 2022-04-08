@@ -13,36 +13,33 @@ import { BIG_ZERO, CONTRACT_CONSTANTS } from "./constants";
 // NOTE: this will recognize all the typings of the contract
 // if you just use Contract type it is generic
 import { VolcanoCoin } from "../typechain";
+import { deployTestContract } from "./utils";
 
 describe("VolcanoCoin", function () {
   let ownerAccount: Signer;
   let nonOwnerAccount: Signer;
-
+  let ownerAccountAddress: string;
+  let nonOwnerAccountAddress: string;
   let volcanoCoinContract: VolcanoCoin;
-  before("compile and deploy the contract", async () => {
+
+  before("get signing accounts", async () => {
     // get and assign the two signer accounts
-    const [first, second] = await ethers.getSigners();
-    ownerAccount = first;
-    nonOwnerAccount = second;
+    [ownerAccount, nonOwnerAccount] = await ethers.getSigners();
 
-    const VolcanoCoin = await ethers.getContractFactory("VolcanoCoin");
-
-    // deploy the contract with the owner account as the signer
-    // https://hardhat.org/guides/waffle-testing.html#testing-from-a-different-account
-    // https://docs.ethers.io/v5/single-page/#/v5/api/contract/contract-factory/-%23-ContractFactory-connect
-    volcanoCoinContract = await VolcanoCoin.connect(ownerAccount).deploy();
-
-    // https://docs.ethers.io/v5/single-page/#/v5/api/contract/contract/-%23-Contract-deployed
-    await volcanoCoinContract.deployed();
+    [ownerAccountAddress, nonOwnerAccountAddress] = await Promise.all(
+      [ownerAccount, nonOwnerAccount].map((signer) => signer.getAddress())
+    );
   });
 
   describe("contract creation", () => {
-    it("should compile and deploy without error", () =>
-      expect(volcanoCoinContract).to.exist);
+    it("should compile and deploy without error", async () => {
+      volcanoCoinContract = await deployTestContract(ownerAccount);
+
+      expect(volcanoCoinContract).to.exist;
+    });
 
     it("should assign the owner to the account that created the contract", async () => {
       const owner = await volcanoCoinContract.getOwner();
-      const ownerAccountAddress = await ownerAccount.getAddress();
 
       expect(owner).to.equal(ownerAccountAddress);
     });
@@ -53,7 +50,6 @@ describe("VolcanoCoin", function () {
       ));
 
     it("should assign the initial supply to the owner account balance", async () => {
-      const ownerAccountAddress = await ownerAccount.getAddress();
       const balance = await volcanoCoinContract.balanceOf(ownerAccountAddress);
 
       expect(balance).to.equal(CONTRACT_CONSTANTS.initialSupply);
@@ -72,9 +68,6 @@ describe("VolcanoCoin", function () {
     });
 
     it("balanceOf: returns the current balance of the specified account argument", async () => {
-      const ownerAccountAddress = await ownerAccount.getAddress();
-      const nonOwnerAccountAddress = await nonOwnerAccount.getAddress();
-
       const ownerBalance = await volcanoCoinContract
         .connect(ownerAccount)
         .balanceOf(ownerAccountAddress);
@@ -90,7 +83,6 @@ describe("VolcanoCoin", function () {
 
     describe("paymentsFrom: returns the payments sent from the specified account argument", () => {
       it("returns an empty array if no payments have been made from the account", async () => {
-        const ownerAccountAddress = await ownerAccount.getAddress();
         const payments = await volcanoCoinContract.paymentsFrom(
           ownerAccountAddress
         );
@@ -100,8 +92,6 @@ describe("VolcanoCoin", function () {
 
       it("returns an array of Payment ({ recipient, amount }) when payments have been made from the account", async () => {
         const amount = 1000;
-        const ownerAccountAddress = await ownerAccount.getAddress();
-        const nonOwnerAccountAddress = await nonOwnerAccount.getAddress();
 
         await volcanoCoinContract
           .connect(ownerAccount)
@@ -166,8 +156,8 @@ describe("VolcanoCoin", function () {
 
   describe("transfer is a publicly accessible function", () => {
     it("should revert if the caller account balance is less than the transfer amount", async () => {
-      const recipientAddress = await ownerAccount.getAddress();
-      const senderAddress = await nonOwnerAccount.getAddress();
+      const recipientAddress = ownerAccountAddress;
+      const senderAddress = nonOwnerAccountAddress;
 
       const initialBalanceOfSender = await volcanoCoinContract.balanceOf(
         senderAddress
@@ -184,7 +174,7 @@ describe("VolcanoCoin", function () {
 
     it("should transfer the amount from the caller balance to the recipient balance if the amount is less than or equal to current caller balance", async () => {
       const amount = 1000;
-      const recipientAddress = await nonOwnerAccount.getAddress();
+      const recipientAddress = nonOwnerAccountAddress;
 
       // NOTE: you MUST pass a callback that invokes the transfer function
       // otherwise get cryptic error: TypeError: transactionCall is not a function
@@ -212,8 +202,8 @@ describe("VolcanoCoin", function () {
 
     it("emits a Transfer event with (from, to, amount) as output when a transfer occurs", async () => {
       const amount = 1000;
-      const fromAddress = await ownerAccount.getAddress();
-      const toAddress = await nonOwnerAccount.getAddress();
+      const fromAddress = ownerAccountAddress;
+      const toAddress = nonOwnerAccountAddress;
 
       // NOTE: you MUST await (or return the promise) the expect
       // without await this will always pass! unintuitive..
@@ -234,7 +224,6 @@ describe("VolcanoCoin", function () {
   // remove .skip to run
   describe.skip("[BONUS] additional requirements to try implementing", () => {
     it("increaseTotalSupply: assigns the increased supply to the owner account balance when successful", async () => {
-      const ownerAccountAddress = await ownerAccount.getAddress();
       const initialBalance: BigNumber = await volcanoCoinContract.balanceOf(
         ownerAccountAddress
       );
@@ -252,14 +241,11 @@ describe("VolcanoCoin", function () {
     });
 
     // THINK: does this actually make balances private? can they be determined by other means?
-    it("balanceOf: reverts if a non-owner caller requests the balance of someone else's account", async () => {
-      const ownerAccountAddress = await ownerAccount.getAddress();
-
-      await expect(
+    it("balanceOf: reverts if a non-owner caller requests the balance of someone else's account", () =>
+      expect(
         volcanoCoinContract
           .connect(nonOwnerAccount)
           .balanceOf(ownerAccountAddress)
-      ).to.be.reverted;
-    });
+      ).to.be.reverted);
   });
 });

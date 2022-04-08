@@ -8,7 +8,7 @@ import { BIG_ZERO, CONTRACT_CONSTANTS } from "./constants";
 import type { Signer } from "ethers";
 import type { VolcanoCoin } from "../typechain";
 
-describe("VolcanoCoin ERC20 adherence", () => {
+describe("VolcanoCoin ERC20 compliance", () => {
   let ownerAccount: Signer;
   let spenderAccount: Signer;
   let otherAccount: Signer;
