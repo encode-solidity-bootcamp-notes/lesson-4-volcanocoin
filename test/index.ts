@@ -13,7 +13,7 @@ import { BIG_ZERO, CONTRACT_CONSTANTS } from "./constants";
 // NOTE: this will recognize all the typings of the contract
 // if you just use Contract type it is generic
 import { VolcanoCoin } from "../typechain";
-import { deployTestContract } from "./utils";
+import { deployTestContract, getTestSigningAccounts } from "./utils";
 
 describe("VolcanoCoin", function () {
   let ownerAccount: Signer;
@@ -24,11 +24,10 @@ describe("VolcanoCoin", function () {
 
   before("get signing accounts", async () => {
     // get and assign the two signer accounts
-    [ownerAccount, nonOwnerAccount] = await ethers.getSigners();
-
-    [ownerAccountAddress, nonOwnerAccountAddress] = await Promise.all(
-      [ownerAccount, nonOwnerAccount].map((signer) => signer.getAddress())
-    );
+    [
+      [ownerAccount, ownerAccountAddress],
+      [nonOwnerAccount, nonOwnerAccountAddress],
+    ] = await getTestSigningAccounts();
   });
 
   describe("contract creation", () => {

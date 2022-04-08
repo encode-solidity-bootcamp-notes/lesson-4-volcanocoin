@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { BigNumber } from "ethers";
 
-import { deployTestContract } from "./utils";
+import { deployTestContract, getTestSigningAccounts } from "./utils";
 import { BIG_ZERO, CONTRACT_CONSTANTS } from "./constants";
 
 import type { Signer } from "ethers";
@@ -18,14 +18,11 @@ describe("VolcanoCoin ERC20 compliance", () => {
 
   before("get signing accounts", async () => {
     // get and assign the two signer accounts
-    [ownerAccount, spenderAccount, otherAccount] = await ethers.getSigners();
-
-    [ownerAccountAddress, spenderAccountAddress, otherAccountAddress] =
-      await Promise.all(
-        [ownerAccount, spenderAccount, otherAccount].map((signer) =>
-          signer.getAddress()
-        )
-      );
+    [
+      [ownerAccount, ownerAccountAddress],
+      [spenderAccount, spenderAccountAddress],
+      [otherAccount, otherAccountAddress],
+    ] = await getTestSigningAccounts();
   });
 
   describe("ERC20 Metadata view functions", () => {
