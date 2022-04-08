@@ -53,29 +53,41 @@ contract VolcanoCoin is IERC20 {
         return _contractOwner;
     }
 
-    function balanceOf(address _owner)
+    function balanceOf(address owner)
         public
         view
         override
         returns (uint256 balance)
     {
-        return _balances[_owner];
+        return _balances[owner];
     }
 
-    function paymentsFrom(address _account)
+    function paymentsFrom(address owner)
         public
         view
         returns (Payment[] memory)
     {
-        return _payments[_account];
+        return _payments[owner];
     }
 
-    function allowance(address _owner, address _spender)
+    function allowance(address owner, address spender)
         public
         view
         override
         returns (uint256 remaining)
-    {}
+    {
+        // NOTE: these are the steps broken out for readability
+        // however to declare a local variable for spendingAllowances would require it to be held in storage which would waste gas
+        // with no data location: Data location must be "storage", "memory" or "calldata" for variable, but none was given.
+        // with memory data location: Type mapping(address => uint256) is only valid in storage because it contains a (nested) mapping.
+
+        // mapping(address => uint256) storage spendingAllowances = _allowances[owner];
+
+        // uint256 allowanceRemainingForSpender = spendingAllowances[spender];
+        // return allowanceRemainingForSpender;
+
+        return _allowances[owner][spender];
+    }
 
     // -- MUTATING FUNCTIONS -- //
 
@@ -85,13 +97,27 @@ contract VolcanoCoin is IERC20 {
         emit TotalSupplyChange(totalSupply);
     }
 
-    function approve(address _spender, uint256 _value)
+    // NOTE: UNSAFE - https://docs.google.com/document/d/1YLPtQxZu1UAvO9cZ1O2RPXBbT0mooh4DYKjA_jp-RLM/edit
+    function approve(address spender, uint256 value)
         public
         override
         returns (bool success)
-    {}
+    {
+        address owner = msg.sender;
 
-    function transfer(address _to, uint256 _value)
+        require(
+            value <= _balances[owner],
+            "Allowance must be less than current account balance"
+        );
+
+        _allowances[owner][spender] = value;
+
+        emit Approval(owner, spender, value);
+
+        return true;
+    }
+
+    function transfer(address to, uint256 value)
         public
         override
         returns (bool success)
@@ -100,24 +126,24 @@ contract VolcanoCoin is IERC20 {
         uint256 currentBalance = balanceOf(from);
 
         require(
-            _value <= currentBalance,
+            value <= currentBalance,
             "Transfer amount must be less than or equal to current balance of account"
         );
 
-        _balances[from] -= _value;
-        _balances[_to] += _value;
+        _balances[from] -= value;
+        _balances[to] += value;
 
         // only emit and record Payment after successful transfer
-        emit Transfer(from, _to, _value);
+        emit Transfer(from, to, value);
 
-        _payments[from].push(Payment({to: _to, value: _value}));
+        _payments[from].push(Payment({to: to, value: value}));
 
         return true;
     }
 
     function transferFrom(
-        address _from,
-        address _to,
-        uint256 _value
+        address from,
+        address to,
+        uint256 value
     ) public override returns (bool success) {}
 }
