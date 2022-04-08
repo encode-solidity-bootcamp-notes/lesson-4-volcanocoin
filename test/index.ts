@@ -191,16 +191,20 @@ describe("VolcanoCoin", function () {
 
     it("should transfer the amount from the caller balance to the recipient balance if the amount is less than or equal to current caller balance", async () => {
       const amount = 1000;
-      const senderAddress = await ownerAccount.getAddress();
       const recipientAddress = await nonOwnerAccount.getAddress();
 
-      expect(
+      // NOTE: you MUST pass a callback that invokes the transfer function
+      // otherwise get cryptic error: TypeError: transactionCall is not a function
+      // https://ethereum-waffle.readthedocs.io/en/latest/matchers.html#change-token-balance
+      await expect(() =>
         volcanoCoinContract
           .connect(ownerAccount)
           .transfer(recipientAddress, amount)
       ).to.changeTokenBalances(
         volcanoCoinContract,
-        [senderAddress, recipientAddress],
+        // NOTE: these must be Signer objects, NOT addresses!
+        // otherwise will get error when matcher tries to call getAddress()
+        [ownerAccount, nonOwnerAccount],
         [-amount, amount]
       );
     });
