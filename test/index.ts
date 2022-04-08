@@ -8,7 +8,7 @@ import { ethers } from "hardhat";
 import { BigNumber } from "ethers";
 
 import type { Signer } from "ethers";
-import { CONTRACT_CONSTANTS } from "./constants";
+import { BIG_ZERO, CONTRACT_CONSTANTS } from "./constants";
 
 // NOTE: this will recognize all the typings of the contract
 // if you just use Contract type it is generic
@@ -85,7 +85,7 @@ describe("VolcanoCoin", function () {
         .connect(nonOwnerAccount)
         .balanceOf(nonOwnerAccountAddress);
 
-      expect(nonOwnerBalance).to.equal(BigNumber.from(0));
+      expect(nonOwnerBalance).to.equal(BIG_ZERO);
     });
 
     describe("paymentsFrom: returns the payments sent from the specified account argument", () => {
@@ -115,7 +115,7 @@ describe("VolcanoCoin", function () {
 
         const [ownerPayment] = ownerPayments;
         expect(ownerPayment.to).to.equal(nonOwnerAccountAddress);
-        expect(ownerPayment.value).to.equal(BigNumber.from(amount));
+        expect(ownerPayment.amount).to.equal(BigNumber.from(amount));
 
         // send back to confirm same behavior from non owner account
 
@@ -131,7 +131,7 @@ describe("VolcanoCoin", function () {
 
         const [nonOwnerPayment] = nonOwnerPayments;
         expect(nonOwnerPayment.to).to.equal(ownerAccountAddress);
-        expect(nonOwnerPayment.value).to.equal(BigNumber.from(amount));
+        expect(nonOwnerPayment.amount).to.equal(BigNumber.from(amount));
       });
     });
   });
@@ -173,7 +173,7 @@ describe("VolcanoCoin", function () {
         senderAddress
       );
       // confirm expected initial state
-      expect(initialBalanceOfSender).to.equal(BigNumber.from(0));
+      expect(initialBalanceOfSender).to.equal(BIG_ZERO);
 
       expect(
         volcanoCoinContract
@@ -184,16 +184,18 @@ describe("VolcanoCoin", function () {
 
     it("should transfer the amount from the caller balance to the recipient balance if the amount is less than or equal to current caller balance", async () => {
       const amount = 1000;
-      const senderAddress = await ownerAccount.getAddress();
       const recipientAddress = await nonOwnerAccount.getAddress();
 
-      expect(
+      // NOTE: you MUST pass a callback that invokes the transfer function
+      // otherwise get cryptic error: TypeError: transactionCall is not a function
+      // https://ethereum-waffle.readthedocs.io/en/latest/matchers.html#change-token-balance
+      await expect(() =>
         volcanoCoinContract
           .connect(ownerAccount)
           .transfer(recipientAddress, amount)
       ).to.changeTokenBalances(
         volcanoCoinContract,
-        [senderAddress, recipientAddress],
+        [ownerAccount, nonOwnerAccount],
         [-amount, amount]
       );
     });
@@ -205,21 +207,26 @@ describe("VolcanoCoin", function () {
         volcanoCoinContract.connect(ownerAccount).increaseSupply()
       ).to.emit(
         volcanoCoinContract,
-        CONTRACT_CONSTANTS.events.totalSupplyChange
+        volcanoCoinContract.interface.events["TotalSupplyChange(uint256)"].name
       ));
 
-    it("emits a Transfer event with (recipient address, amount) as output when a transfer occurs", async () => {
+    it("emits a Transfer event with (from, to, amount) as output when a transfer occurs", async () => {
       const amount = 1000;
       const fromAddress = await ownerAccount.getAddress();
       const toAddress = await nonOwnerAccount.getAddress();
 
-      // NOTE: you MUST await the expect
+      // NOTE: you MUST await (or return the promise) the expect
       // without await this will always pass! unintuitive..
       // https://github.com/TrueFiEng/Waffle/pull/684
       await expect(
         volcanoCoinContract.connect(ownerAccount).transfer(toAddress, amount)
       )
-        .to.emit(volcanoCoinContract, CONTRACT_CONSTANTS.events.transfer)
+        .to.emit(
+          volcanoCoinContract,
+          volcanoCoinContract.interface.events[
+            "Transfer(address,address,uint256)"
+          ].name
+        )
         .withArgs(fromAddress, toAddress, amount);
     });
   });
