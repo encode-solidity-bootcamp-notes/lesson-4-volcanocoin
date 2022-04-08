@@ -3,7 +3,7 @@ import { ethers } from "hardhat";
 import { BigNumber } from "ethers";
 
 import { deployTestContract } from "./utils";
-import { BIG_ZERO } from "./constants";
+import { BIG_ZERO, CONTRACT_CONSTANTS } from "./constants";
 
 import type { Signer } from "ethers";
 import type { VolcanoCoin } from "../typechain";
@@ -26,6 +26,33 @@ describe("VolcanoCoin ERC20 adherence", () => {
           signer.getAddress()
         )
       );
+  });
+
+  describe("ERC20 Metadata view functions", () => {
+    let volcanoCoinContract: VolcanoCoin;
+    before("deploy test contract", async () => {
+      volcanoCoinContract = await deployTestContract(ownerAccount);
+    });
+
+    it("name: returns the token name", async () =>
+      expect(await volcanoCoinContract.name()).to.equal(
+        CONTRACT_CONSTANTS.metadata.name
+      ));
+
+    it("symbol: returns the token symbol", async () =>
+      expect(await volcanoCoinContract.symbol()).to.equal(
+        CONTRACT_CONSTANTS.metadata.symbol
+      ));
+
+    it("decimals: returns the decimals of the token", async () =>
+      expect(await volcanoCoinContract.decimals()).to.equal(
+        CONTRACT_CONSTANTS.metadata.decimals
+      ));
+
+    it("totalSupply: returns the total (initial) supply of the token", async () =>
+      expect(await volcanoCoinContract.totalSupply()).to.equal(
+        CONTRACT_CONSTANTS.initialSupply
+      ));
   });
 
   describe("approval and allowance of spender accounts", () => {
