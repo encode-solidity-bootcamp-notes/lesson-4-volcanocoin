@@ -45,7 +45,22 @@ describe("VolcanoCoin ERC20 adherence", () => {
         expect(spenderAllowance).to.equal(BigNumber.from(allowance));
       });
 
-      it("reverts if the value is > the owner balance", async () => {
+      it("when successful it emits an Approval event with (owner, spender, value) as output", async () => {
+        const allowance = 1000;
+
+        await expect(
+          volcanoCoinContract.approve(spenderAccountAddress, allowance)
+        )
+          .to.emit(
+            volcanoCoinContract,
+            volcanoCoinContract.interface.events[
+              "Approval(address,address,uint256)"
+            ].name
+          )
+          .withArgs(ownerAccountAddress, spenderAccountAddress, allowance);
+      });
+
+      it("reverts if the allowance value is > the owner balance", async () => {
         const balance = await volcanoCoinContract.balanceOf(
           ownerAccountAddress
         );
