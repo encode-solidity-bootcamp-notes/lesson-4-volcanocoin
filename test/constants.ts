@@ -9,3 +9,5 @@ export const CONTRACT_CONSTANTS = {
     totalSupplyChange: "TotalSupplyChange",
   },
 };
+
+export const BIG_ZERO = BigNumber.from(0);
