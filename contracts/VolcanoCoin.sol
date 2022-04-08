@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
+import "hardhat/console.sol";
 // use OZ interface to ensure conforming of public interface
 // https://docs.openzeppelin.com/contracts/4.x/api/token/erc20#IERC20
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -9,7 +10,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 struct Payment {
     address to;
-    uint256 value;
+    uint256 amount;
 }
 
 contract VolcanoCoin is IERC20 {
@@ -117,33 +118,53 @@ contract VolcanoCoin is IERC20 {
         return true;
     }
 
-    function transfer(address to, uint256 value)
+    function transfer(address to, uint256 amount)
         public
         override
         returns (bool success)
     {
         address from = msg.sender;
-        uint256 currentBalance = balanceOf(from);
 
-        require(
-            value <= currentBalance,
-            "Transfer amount must be less than or equal to current balance of account"
-        );
-
-        _balances[from] -= value;
-        _balances[to] += value;
-
-        // only emit and record Payment after successful transfer
-        emit Transfer(from, to, value);
-
-        _payments[from].push(Payment({to: to, value: value}));
-
-        return true;
+        return _transfer(from, to, amount);
     }
 
     function transferFrom(
+        address owner,
+        address to,
+        uint256 amount
+    ) public override returns (bool success) {
+        address spender = msg.sender;
+        uint256 spenderAllowance = allowance(owner, spender);
+
+        require(
+            amount <= spenderAllowance,
+            "Transfer amount must be less than or equal to the spender allowance"
+        );
+
+        return _transfer(owner, to, amount);
+    }
+
+    // internal transfer function to abstract transfer logic for both transfer and transferFrom
+    function _transfer(
         address from,
         address to,
-        uint256 value
-    ) public override returns (bool success) {}
+        uint256 amount
+    ) private returns (bool success) {
+        uint256 currentBalance = balanceOf(from);
+
+        require(
+            amount <= currentBalance,
+            "Transfer amount must be less than or equal to current balance of account"
+        );
+
+        _balances[from] -= amount;
+        _balances[to] += amount;
+
+        // only emit and record Payment after successful transfer
+        emit Transfer(from, to, amount);
+
+        _payments[from].push(Payment({to: to, amount: amount}));
+
+        return true;
+    }
 }
