@@ -1,42 +1,58 @@
 > **all credit and rights to the homework questions belong to Laurence Kirk and his team from Extropy**
 
-# homework 4 - VolcanoCoin
+# ERC20 compliance with VolcanoCoin
 
-you can use this repo to get instant feedback as you implement the requirements from the homework.
+extension of previous tests. uses and implements the [OZ IERC20](https://docs.openzeppelin.com/contracts/4.x/api/token/erc20#IERC20) and [OZ IERC20Metadata](https://docs.openzeppelin.com/contracts/4.x/api/token/erc20#IERC20Metadata) interfaces.
 
-> **NOTE**: the test and contract implementations **should not be used as a reference**
-
-this was just an attempt to follow TDD by turning the homework specs into tests and then implementing the contract. when we get to the hardhat and testing lessons we will learn the correct way to use these tools.
-
-if you see a better way to do something just open a PR with changes and an explanation so we can all learn from it. see the contributing section at the end
+separates new features in `test/erc-20.ts` tests.
 
 > tests
 
-```sh
-  VolcanoCoin
-    contract creation
-      ✔ should compile and deploy without error
-      ✔ should assign the owner to the account that created the contract
-      ✔ should have an initial supply of 10,000 tokens
-      ✔ should assign the initial supply to the owner account balance
-    publicly accessible view functions
-      ✔ getTotalSupply: returns the current total supply
-      ✔ balanceOf: returns the current balance of the specified account argument
-      paymentsFrom: returns the payments sent from the specified account argument
-        ✔ returns an empty array if no payments have been made from the account
-        ✔ returns an array of Payment ({ recipient, amount }) when payments have been made from the account (109ms)
-    increaseSupply is a publicly accessible function that only the owner account can call
-      ✔ when called from the owner account it increases the total supply by 1000 (44ms)
-      ✔ when called from a non-owner account it reverts so as not to increase the total supply (51ms)
-    transfer is a publicly accessible function
-      ✔ should revert if the caller account balance is less than the transfer amount
-      ✔ should transfer the amount from the caller balance to the recipient balance if the amount is less than or equal to current caller balance
-    contract events
-      ✔ emits a TotalSupplyChange event with the new total supply as output when the total supply changes (71ms)
-      ✔ emits a Transfer event with (recipient address, amount) as output when a transfer occurs (38ms)
-    [BONUS] additional requirements to try implementing
-      - increaseTotalSupply: assigns the increased supply to the owner account balance when successful
-      - balanceOf: reverts if a non-owner caller requests the balance of someone else's account
+```
+VolcanoCoin
+  contract creation
+    ✔ should compile and deploy without error
+    ✔ should assign the owner to the account that created the contract
+    ✔ should have an initial supply of 10,000 tokens
+    ✔ should assign the initial supply to the owner account balance
+  publicly accessible view functions
+    ✔ totalSupply: returns the current total supply
+    ✔ balanceOf: returns the current balance of the specified account argument
+    paymentsFrom: returns the payments sent from the specified account argument
+      ✔ returns an empty array if no payments have been made from the account
+      ✔ returns an array of Payment ({ recipient, amount }) when payments have been made from the account
+  increaseSupply is a publicly accessible function that only the owner account can call
+    ✔ when called from the owner account it increases the total supply by 1000
+    ✔ when called from a non-owner account it reverts so as not to increase the total supply
+  transfer is a publicly accessible function
+    ✔ should revert if the caller account balance is less than the transfer amount
+    ✔ should transfer the amount from the caller balance to the recipient balance if the amount is less than or equal to current caller balance
+  contract events
+    ✔ emits a TotalSupplyChange event with the new total supply as output when the total supply changes
+    ✔ emits a Transfer event with (from, to, amount) as output when a transfer occurs
+  [BONUS] additional requirements to try implementing
+    - increaseTotalSupply: assigns the increased supply to the owner account balance when successful
+    - balanceOf: reverts if a non-owner caller requests the balance of someone else's account
+
+VolcanoCoin ERC20 compliance
+  ERC20 Metadata view functions
+    ✔ name: returns the token name
+    ✔ symbol: returns the token symbol
+    ✔ decimals: returns the decimals of the token
+    ✔ totalSupply: returns the total (initial) supply of the token
+  approval and allowance of spender accounts
+    approve function
+      ✔ sets the allowance of the spender account if the value is less than or equal to the owner balance
+      ✔ when successful it emits an Approval event with (owner, spender, value) as output
+      ✔ reverts if the allowance value is greater than the owner balance
+    view allowance
+      ✔ returns 0 if the spender has not been approved by the owner
+      ✔ returns the allowance value approved by the owner to the spender
+  transferFrom function
+    ✔ reverts if the caller (spender) does not have an allowance approved by the owner
+    ✔ reverts if the allowance of the caller (spender) is less than the amount to be transferred
+    ✔ transfers successfully if the caller (spender) allowance is less than or equal to the transfer amount
+    ✔ when successful it emits a Transfer event with (from, to, amount) as output
 ```
 
 ## usage
